@@ -1,34 +1,33 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from database import  engine
+from models import Base
+from fastapi.middleware.cors import CORSMiddleware
+from crud import router as crud_router
+
+
 app = FastAPI()
 
-class Todo(BaseModel):
-    id:int
-    name:str
-    description:str
+Base.metadata.create_all(bind=engine) # is code se database bana hai 
 
-todos=[]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # sabhi origins ko allow karo
+    allow_methods=["*"],  # sabhi HTTP methods ko allow karo
+    allow_credentials=True,  # credentials ko allow karo
+    allow_headers=["*"],  # sabhi headers ko allow karo
+)
 
 @app.get("/")
-def show():
-    return todos
+def read_root():
+    return {"message": "Welcome to the TODO API"}
 
-@app.post("/")
-def creat_todo(todo:Todo):
-    todos.append(todo)
-    return {"successful"}
+# crud_router ko main.py me include karna hai taki crud.py ke sare endpoints(API) main.py me available ho jaye
+app.include_router(crud_router, prefix="/todo", tags=["Crud Router"])
 
-@app.put("/{todo_id}")
-def update_todo(todo_id : int , updated_todo : Todo):
-    for i,todo in enumerate(todos):
-        if todo.id==todo_id:
-            todos[i]=updated_todo
-            return {"updated"}
-    return {"not updated"}
 
-@app.delete('/{todo_id}')
-def delete_todo(todo_id: int):
-    global todos
-    todos = [todo for todo in todos if todo.id != todo_id]
-    return {"delete ho gya"}
+
+
+
+
 
